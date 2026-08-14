@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HupHup Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <header class="top">
+        <div class="brand">
+          <span class="logo">H</span>
+          <div>
+            <h1>HupHup Monitor</h1>
+            <p class="sub">Backend · PostgreSQL · Uptime</p>
+          </div>
+        </div>
+        <div class="top-meta">
+          <span id="poll-label" class="pill">—</span>
+          <button id="refresh-btn" type="button" class="btn">Тексеру</button>
+        </div>
+      </header>
+
+      <section class="cards">
+        <article class="card" id="card-api">
+          <small>Backend API</small>
+          <strong id="api-status">—</strong>
+          <span id="api-detail" class="meta">—</span>
+        </article>
+        <article class="card" id="card-db">
+          <small>PostgreSQL</small>
+          <strong id="db-status">—</strong>
+          <span id="db-detail" class="meta">—</span>
+        </article>
+        <article class="card" id="card-latency">
+          <small>Уақыт / Latency</small>
+          <strong id="latency-status">—</strong>
+          <span id="latency-detail" class="meta">—</span>
+        </article>
+        <article class="card" id="card-uptime">
+          <small>Uptime (сессия)</small>
+          <strong id="uptime-status">—</strong>
+          <span id="uptime-detail" class="meta">—</span>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Тарих / History</h2>
+          <span id="history-count" class="meta">0 checks</span>
+        </div>
+        <div class="spark" id="spark" aria-hidden="true"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Уақыт</th>
+                <th>API</th>
+                <th>DB</th>
+                <th>Latency</th>
+                <th>HTTP</th>
+              </tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <span id="targets">—</span>
+        <span id="last-error" class="err"></span>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
