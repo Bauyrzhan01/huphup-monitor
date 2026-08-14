@@ -7,75 +7,186 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
-    <div id="app">
-      <header class="top">
+    <div class="layout">
+      <aside class="sidebar">
         <div class="brand">
-          <span class="logo">H</span>
-          <div>
-            <h1>HupHup Monitor</h1>
-            <p class="sub">Backend · PostgreSQL · Uptime</p>
+          <div class="logo">H</div>
+          HupHup
+        </div>
+        <div class="side-label">Мониторинг</div>
+        <nav class="nav">
+          <a href="#" class="active" data-tab="dashboard">📊 Dashboard</a>
+          <a href="#" data-tab="history">📋 Тарих</a>
+          <a href="#" data-tab="endpoints">🔗 Endpoints</a>
+        </nav>
+        <div class="side-bottom">
+          <div class="user-card">
+            <div class="avatar">M</div>
+            <div>
+              <div class="user-name">Monitor</div>
+              <div class="user-role" id="side-status">Тексеруде…</div>
+            </div>
           </div>
         </div>
-        <div class="top-meta">
-          <span id="poll-label" class="pill">—</span>
-          <button id="refresh-btn" type="button" class="btn">Тексеру</button>
-        </div>
-      </header>
+      </aside>
 
-      <section class="cards">
-        <article class="card" id="card-api">
-          <small>Backend API</small>
-          <strong id="api-status">—</strong>
-          <span id="api-detail" class="meta">—</span>
-        </article>
-        <article class="card" id="card-db">
-          <small>PostgreSQL</small>
-          <strong id="db-status">—</strong>
-          <span id="db-detail" class="meta">—</span>
-        </article>
-        <article class="card" id="card-latency">
-          <small>Уақыт / Latency</small>
-          <strong id="latency-status">—</strong>
-          <span id="latency-detail" class="meta">—</span>
-        </article>
-        <article class="card" id="card-uptime">
-          <small>Uptime (сессия)</small>
-          <strong id="uptime-status">—</strong>
-          <span id="uptime-detail" class="meta">—</span>
-        </article>
-      </section>
+      <div class="main">
+        <header class="topbar">
+          <div class="crumb">HupHup для бизнеса · <span id="crumb-tab">Dashboard</span></div>
+          <div class="top-actions">
+            <span id="poll-label" class="chip">—</span>
+            <span id="overall-badge" class="badge">—</span>
+            <button id="refresh-btn" type="button" class="primary">Тексеру</button>
+          </div>
+        </header>
 
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Тарих / History</h2>
-          <span id="history-count" class="meta">0 checks</span>
-        </div>
-        <div class="spark" id="spark" aria-hidden="true"></div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Уақыт</th>
-                <th>API</th>
-                <th>DB</th>
-                <th>Latency</th>
-                <th>HTTP</th>
-              </tr>
-            </thead>
-            <tbody id="history-body"></tbody>
-          </table>
-        </div>
-      </section>
+        <div class="page">
+          <!-- Dashboard -->
+          <section id="tab-dashboard" class="tab-panel is-on">
+            <div class="page-head">
+              <div>
+                <h1>Мониторинг инфраструктуры</h1>
+                <p>Backend API, PostgreSQL, Frontend · real-time статус</p>
+              </div>
+              <div class="head-time">
+                <small>Соңғы тексеру</small>
+                <b id="last-check">—</b>
+              </div>
+            </div>
 
-      <footer class="foot">
-        <span id="targets">—</span>
-        <span id="last-error" class="err"></span>
-      </footer>
+            <div class="stat-grid">
+              <article class="stat" id="stat-api">
+                <small>Backend API</small>
+                <b id="api-status">—</b>
+                <span id="api-detail" class="stat-meta">—</span>
+              </article>
+              <article class="stat" id="stat-db">
+                <small>PostgreSQL</small>
+                <b id="db-status">—</b>
+                <span id="db-detail" class="stat-meta">—</span>
+              </article>
+              <article class="stat" id="stat-frontend">
+                <small>Frontend (Vercel)</small>
+                <b id="frontend-status">—</b>
+                <span id="frontend-detail" class="stat-meta">—</span>
+              </article>
+              <article class="stat" id="stat-uptime">
+                <small>Uptime (сессия)</small>
+                <b id="uptime-status">—</b>
+                <span id="uptime-detail" class="stat-meta">—</span>
+              </article>
+            </div>
+
+            <div class="detail-grid monitor-grid">
+              <div class="detail-main">
+                <div class="panel">
+                  <h3 class="section-title">Latency — API vs Database (ms)</h3>
+                  <canvas id="chart-latency" height="220"></canvas>
+                  <div class="chart-legend">
+                    <span><i class="dot blue"></i> API round-trip</span>
+                    <span><i class="dot green"></i> DB query</span>
+                  </div>
+                </div>
+                <div class="panel">
+                  <h3 class="section-title">Статус тексерулер (timeline)</h3>
+                  <canvas id="chart-status" height="100"></canvas>
+                </div>
+              </div>
+              <div class="detail-side">
+                <div class="panel">
+                  <h3 class="section-title">Uptime diagram</h3>
+                  <div class="donut-wrap">
+                    <canvas id="chart-donut" width="180" height="180"></canvas>
+                    <div class="donut-center">
+                      <b id="donut-pct">—</b>
+                      <small>OK</small>
+                    </div>
+                  </div>
+                  <div class="donut-legend">
+                    <span><i class="dot green"></i> OK <b id="leg-ok">0</b></span>
+                    <span><i class="dot red"></i> Fail <b id="leg-fail">0</b></span>
+                  </div>
+                </div>
+                <div class="panel">
+                  <h3 class="section-title">Latency stats</h3>
+                  <div class="kv"><span>API avg</span><b id="stat-api-avg">—</b></div>
+                  <div class="kv"><span>API min / max</span><b id="stat-api-range">—</b></div>
+                  <div class="kv"><span>DB avg</span><b id="stat-db-avg">—</b></div>
+                  <div class="kv"><span>DB min / max</span><b id="stat-db-range">—</b></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel" style="margin-top: 18px">
+              <h3 class="section-title">Server metrics (Railway)</h3>
+              <div class="ai-grid">
+                <div class="ai-cell"><small>Service</small><b id="info-service">—</b></div>
+                <div class="ai-cell"><small>Server time</small><b id="info-time">—</b></div>
+                <div class="ai-cell"><small>Process uptime</small><b id="info-uptime">—</b></div>
+                <div class="ai-cell"><small>Memory RSS</small><b id="info-memory">—</b></div>
+                <div class="ai-cell"><small>Node.js</small><b id="info-node">—</b></div>
+                <div class="ai-cell"><small>Overall</small><b id="info-overall">—</b></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- History -->
+          <section id="tab-history" class="tab-panel">
+            <div class="page-head">
+              <div>
+                <h1>Тарих тексерулер</h1>
+                <p id="history-count">0 checks</p>
+              </div>
+            </div>
+            <div class="panel">
+              <canvas id="chart-history-bar" height="160"></canvas>
+            </div>
+            <div class="panel" style="margin-top: 14px">
+              <div class="table-wrap">
+                <table class="history-table">
+                  <thead>
+                    <tr>
+                      <th>Уақыт</th>
+                      <th>Overall</th>
+                      <th>API</th>
+                      <th>DB</th>
+                      <th>Frontend</th>
+                      <th>API ms</th>
+                      <th>DB ms</th>
+                      <th>HTTP</th>
+                      <th>Қате</th>
+                    </tr>
+                  </thead>
+                  <tbody id="history-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- Endpoints -->
+          <section id="tab-endpoints" class="tab-panel">
+            <div class="page-head">
+              <div>
+                <h1>Endpoints</h1>
+                <p>Бақыланатын URL-дар мен конфигурация</p>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="kv"><span>Health API</span><b id="ep-api" class="mono">—</b></div>
+              <div class="kv"><span>Frontend</span><b id="ep-frontend" class="mono">—</b></div>
+              <div class="kv"><span>Poll interval</span><b id="ep-poll">—</b></div>
+              <div class="kv"><span>History limit</span><b id="ep-history">—</b></div>
+              <div class="kv"><span>Swagger</span><b id="ep-swagger" class="mono">—</b></div>
+            </div>
+            <p id="last-error" class="notice is-error" style="margin-top: 14px; display: none"></p>
+          </section>
+        </div>
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
