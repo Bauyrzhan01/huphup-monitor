@@ -501,6 +501,8 @@ canvas {
 .feed article{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
 .feed small{color:var(--muted);display:block;margin-top:4px}
 .sql-cell{font-family:ui-monospace,monospace;font-size:11px;word-break:break-word}
+
+.notice {
   border: 1px solid var(--line);
   background: #fafafa;
   border-radius: 13px;
