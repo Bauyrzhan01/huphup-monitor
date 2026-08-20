@@ -24,6 +24,7 @@
           <a href="#" data-tab="backend">⚙️ Backend</a>
           <a href="#" data-tab="database">🗄️ База</a>
           <a href="#" data-tab="frontend">🖥️ Frontend</a>
+          <a href="#" data-tab="gemini">✦ Gemini</a>
           <a href="#" data-tab="history">📋 Тарих</a>
           <a href="#" data-tab="endpoints">🔗 Endpoints</a>
         </nav>
@@ -85,6 +86,11 @@
                 <small>Uptime (сессия)</small>
                 <b id="uptime-status">—</b>
                 <span id="uptime-detail" class="stat-meta">—</span>
+              </article>
+              <article class="stat" id="stat-gemini">
+                <small>Gemini API</small>
+                <b id="gemini-status">—</b>
+                <span id="gemini-detail" class="stat-meta">—</span>
               </article>
             </div>
 
@@ -247,6 +253,57 @@
                 </thead>
                 <tbody id="frontend-body"></tbody>
               </table>
+            </div>
+          </section>
+
+          <section id="tab-gemini" class="tab-panel">
+            <div class="page-head">
+              <div>
+                <h1>Gemini API</h1>
+                <p>analyze / clarify / match шақырулары · ключ пен модель тірі ме</p>
+              </div>
+            </div>
+            <div class="stat-grid">
+              <article class="stat" id="ge-configured-card">
+                <small>Ключ</small>
+                <b id="ge-configured">—</b>
+                <span id="ge-model" class="stat-meta">—</span>
+              </article>
+              <article class="stat" id="ge-probe-card">
+                <small>Google API</small>
+                <b id="ge-probe">—</b>
+                <span id="ge-probe-meta" class="stat-meta">—</span>
+              </article>
+              <article class="stat">
+                <small>OK / fail</small>
+                <b id="ge-okfail">—</b>
+                <span class="stat-meta" id="ge-total">boot бері</span>
+              </article>
+              <article class="stat">
+                <small>Орташа latency</small>
+                <b id="ge-avg">—</b>
+                <span class="stat-meta" id="ge-min">соңғы 1 мин: —</span>
+              </article>
+            </div>
+            <div class="panel">
+              <h3 class="section-title">Соңғы generateContent</h3>
+              <div class="table-wrap">
+                <table class="history-table">
+                  <thead>
+                    <tr>
+                      <th>Уақыт</th>
+                      <th>purpose</th>
+                      <th>OK</th>
+                      <th>HTTP</th>
+                      <th>ms</th>
+                      <th>prompt</th>
+                      <th>tokens</th>
+                      <th>қате</th>
+                    </tr>
+                  </thead>
+                  <tbody id="gemini-body"></tbody>
+                </table>
+              </div>
             </div>
           </section>
 

@@ -109,6 +109,18 @@ const els = {
   trMin: $('tr-min'),
   trCodes: $('tr-codes'),
   trSql: $('tr-sql'),
+  geminiStatus: $('gemini-status'),
+  geminiDetail: $('gemini-detail'),
+  statGemini: $('stat-gemini'),
+  geConfigured: $('ge-configured'),
+  geModel: $('ge-model'),
+  geProbe: $('ge-probe'),
+  geProbeMeta: $('ge-probe-meta'),
+  geOkfail: $('ge-okfail'),
+  geTotal: $('ge-total'),
+  geAvg: $('ge-avg'),
+  geMin: $('ge-min'),
+  geminiBody: $('gemini-body'),
 };
 
 function getSecret() {
@@ -158,6 +170,36 @@ function renderOps(data: {
       title: string | null;
       error?: string;
     }>;
+  };
+  gemini?: {
+    configured: boolean;
+    model: string;
+    probe: {
+      ok: boolean;
+      status: number;
+      ms: number;
+      name?: string | null;
+      error?: string;
+    };
+    calls: {
+      totalSinceBoot: number;
+      ok: number;
+      fail: number;
+      lastMinute: number;
+      avgMs: number | null;
+      recent: Array<{
+        at: string;
+        purpose: string;
+        ok: boolean;
+        status: number;
+        ms: number;
+        promptChars: number;
+        responseChars: number;
+        promptTokens?: number;
+        outputTokens?: number;
+        error?: string;
+      }>;
+    };
   };
 }) {
   els.opsLock.style.display = 'none';
@@ -238,6 +280,40 @@ function renderOps(data: {
       </tr>`,
     )
     .join('');
+
+  if (data.gemini) {
+    const g = data.gemini;
+    els.geConfigured.textContent = g.configured ? 'бар' : 'жоқ';
+    els.geModel.textContent = g.model;
+    els.geProbe.textContent = g.probe.ok ? 'OK' : 'FAIL';
+    els.geProbeMeta.textContent = g.probe.ok
+      ? `HTTP ${g.probe.status} · ${g.probe.ms} ms`
+      : g.probe.error ?? `HTTP ${g.probe.status}`;
+    els.geOkfail.textContent = `${g.calls.ok} / ${g.calls.fail}`;
+    els.geTotal.textContent = `boot бері ${g.calls.totalSinceBoot}`;
+    els.geAvg.textContent = g.calls.avgMs != null ? `${g.calls.avgMs} ms` : '—';
+    els.geMin.textContent = `соңғы 1 мин: ${g.calls.lastMinute}`;
+    els.geminiStatus.textContent = g.probe.ok ? 'OK' : g.configured ? 'FAIL' : 'OFF';
+    els.geminiDetail.textContent = `${g.model} · ${g.calls.ok}/${g.calls.totalSinceBoot} OK`;
+    setStat(
+      els.statGemini,
+      g.probe.ok ? 'ok' : g.configured ? 'down' : 'warn',
+    );
+    els.geminiBody.innerHTML = g.calls.recent
+      .map(
+        (row) => `<tr class="${row.ok ? 'ok' : 'bad'}">
+          <td>${fmtTime(row.at)}</td>
+          <td>${row.purpose}</td>
+          <td>${row.ok ? 'OK' : 'FAIL'}</td>
+          <td>${row.status || '—'}</td>
+          <td>${row.ms}</td>
+          <td>${row.promptChars}</td>
+          <td>${row.promptTokens ?? '—'} → ${row.outputTokens ?? '—'}</td>
+          <td>${row.error ?? ''}</td>
+        </tr>`,
+      )
+      .join('');
+  }
 }
 
 function showOpsError(text: string) {
@@ -553,6 +629,7 @@ function setupTabs() {
         backend: 'Backend',
         database: 'База',
         frontend: 'Frontend',
+        gemini: 'Gemini',
         history: 'Тарих',
         endpoints: 'Endpoints',
       };
