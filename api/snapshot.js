@@ -24,7 +24,10 @@ export default async function handler(req, res) {
     res.send(body);
   } catch (err) {
     res.status(502).json({
-      message: err instanceof Error ? err.message : 'Upstream failed',
+      message:
+        err instanceof Error
+          ? err.message
+          : 'Upstream failed — Railway API is likely down',
     });
   }
 }

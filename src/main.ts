@@ -355,7 +355,10 @@ async function fetchOps() {
         continue;
       }
       if (!res.ok) {
-        lastError = `Ops HTTP ${res.status}`;
+        const body = await res.text().catch(() => '');
+        lastError = body.includes('502') || body.includes('failed to respond')
+          ? 'Railway API өшіп тұр (502). Бекенд redeploy керек.'
+          : `Ops HTTP ${res.status}`;
         continue;
       }
       const ct = res.headers.get('content-type') ?? '';
