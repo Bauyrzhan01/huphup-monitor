@@ -34,10 +34,14 @@ type CheckRow = {
 const API_URL =
   import.meta.env.VITE_API_HEALTH_URL ??
   'https://api-production-8ac1f.up.railway.app/api/v1/health';
+const OPS_URL =
+  import.meta.env.VITE_API_OPS_URL ??
+  API_URL.replace(/\/health\/?$/, '/ops/snapshot');
 const FRONTEND_URL =
   import.meta.env.VITE_FRONTEND_URL ?? 'https://huphup-frontend.vercel.app';
-const POLL_SECONDS = Number(import.meta.env.VITE_POLL_SECONDS ?? 30);
+const POLL_SECONDS = Number(import.meta.env.VITE_POLL_SECONDS ?? 10);
 const MAX_HISTORY = 120;
+const SECRET_KEY = 'huphup_monitor_secret';
 
 const history: CheckRow[] = [];
 let timer: number | undefined;
@@ -88,7 +92,179 @@ const els = {
   chartStatus: $('chart-status') as HTMLCanvasElement,
   chartDonut: $('chart-donut') as HTMLCanvasElement,
   chartHistoryBar: $('chart-history-bar') as HTMLCanvasElement,
+  secretInput: $('secret-input') as HTMLInputElement,
+  secretSave: $('secret-save'),
+  opsLock: $('ops-lock'),
+  trafficBody: $('traffic-body'),
+  sqlBody: $('sql-body'),
+  tableCounts: $('table-counts'),
+  dbRequests: $('db-requests'),
+  dbLeads: $('db-leads'),
+  dbCatalog: $('db-catalog'),
+  dbAct: $('db-act'),
+  frontendBody: $('frontend-body'),
+  feBase: $('fe-base'),
+  trTotal: $('tr-total'),
+  trMin: $('tr-min'),
+  trCodes: $('tr-codes'),
+  trSql: $('tr-sql'),
 };
+
+function getSecret() {
+  return localStorage.getItem(SECRET_KEY) ?? '';
+}
+
+function feed(items: string[]) {
+  if (!items.length) return '<p class="stat-meta">Бос</p>';
+  return items.map((html) => `<article>${html}</article>`).join('');
+}
+
+function renderOps(data: {
+  traffic: {
+    totalSinceBoot: number;
+    lastMinute: number;
+    byStatus: { '2xx': number; '4xx': number; '5xx': number };
+    recent: Array<{
+      at: string;
+      method: string;
+      path: string;
+      status: number;
+      ms: number;
+      userId?: string;
+    }>;
+  };
+  queries: {
+    lastMinute: number;
+    recent: Array<{ at: string; ms: number; sql: string }>;
+  };
+  tables: Record<string, number>;
+  recent: {
+    requests: Array<{ code: string; title: string; city: string | null; status: string; createdAt: string }>;
+    offers: Array<{ status: string; price: number; currency: string; requestCode: string; createdAt: string }>;
+    leads: Array<{ status: string; requestCode: string; requestTitle: string; createdAt: string }>;
+    products: Array<{ name: string; city: string | null; isActive: boolean; createdAt: string }>;
+    companies: Array<{ name: string; city: string | null; verified: boolean; createdAt: string }>;
+    activities: Array<{ type: string; message: string; requestCode: string; createdAt: string }>;
+  };
+  frontend: {
+    base: string;
+    checks: Array<{
+      path: string;
+      ok: boolean;
+      status: number;
+      ms: number;
+      bytes: number;
+      title: string | null;
+      error?: string;
+    }>;
+  };
+}) {
+  els.opsLock.style.display = 'none';
+  els.trTotal.textContent = String(data.traffic.totalSinceBoot);
+  els.trMin.textContent = String(data.traffic.lastMinute);
+  els.trCodes.textContent = `${data.traffic.byStatus['2xx']} / ${data.traffic.byStatus['4xx']} / ${data.traffic.byStatus['5xx']}`;
+  els.trSql.textContent = String(data.queries.lastMinute);
+
+  els.trafficBody.innerHTML = data.traffic.recent
+    .map(
+      (row) => `<tr>
+        <td>${fmtTime(row.at)}</td>
+        <td>${row.method}</td>
+        <td class="sql-cell">${row.path}</td>
+        <td>${row.status}</td>
+        <td>${row.ms}</td>
+        <td>${row.userId ?? '—'}</td>
+      </tr>`,
+    )
+    .join('');
+
+  els.sqlBody.innerHTML = data.queries.recent
+    .map(
+      (row) => `<tr>
+        <td>${fmtTime(row.at)}</td>
+        <td>${row.ms}</td>
+        <td class="sql-cell">${row.sql}</td>
+      </tr>`,
+    )
+    .join('');
+
+  els.tableCounts.innerHTML = Object.entries(data.tables)
+    .map(
+      ([name, count]) =>
+        `<article class="stat"><small>${name}</small><b>${count}</b></article>`,
+    )
+    .join('');
+
+  els.dbRequests.innerHTML = feed(
+    data.recent.requests.map(
+      (r) => `<b>${r.code}</b> ${r.title}<small>${r.status} · ${r.city ?? '—'} · ${fmtTime(r.createdAt)}</small>`,
+    ),
+  );
+  els.dbLeads.innerHTML = feed([
+    ...data.recent.offers.map(
+      (o) => `<b>${o.requestCode}</b> КП ${o.price} ${o.currency}<small>${o.status} · ${fmtTime(o.createdAt)}</small>`,
+    ),
+    ...data.recent.leads.map(
+      (l) => `<b>${l.requestCode}</b> ${l.requestTitle}<small>lead ${l.status} · ${fmtTime(l.createdAt)}</small>`,
+    ),
+  ]);
+  els.dbCatalog.innerHTML = feed([
+    ...data.recent.companies.map(
+      (c) => `<b>${c.name}</b><small>${c.city ?? '—'} · ${c.verified ? 'verified' : 'new'} · ${fmtTime(c.createdAt)}</small>`,
+    ),
+    ...data.recent.products.map(
+      (p) => `<b>${p.name}</b><small>${p.city ?? '—'} · ${p.isActive ? 'active' : 'off'} · ${fmtTime(p.createdAt)}</small>`,
+    ),
+  ]);
+  els.dbAct.innerHTML = feed(
+    data.recent.activities.map(
+      (a) => `<b>${a.type}</b> ${a.message}<small>${a.requestCode} · ${fmtTime(a.createdAt)}</small>`,
+    ),
+  );
+
+  els.feBase.textContent = data.frontend.base;
+  els.frontendBody.innerHTML = data.frontend.checks
+    .map(
+      (c) => `<tr class="${c.ok ? 'ok' : 'bad'}">
+        <td>${c.path}</td>
+        <td>${c.ok ? 'OK' : 'FAIL'}</td>
+        <td>${c.status}</td>
+        <td>${c.ms}</td>
+        <td>${c.bytes}</td>
+        <td>${c.title ?? '—'}</td>
+        <td>${c.error ?? ''}</td>
+      </tr>`,
+    )
+    .join('');
+}
+
+async function fetchOps() {
+  const secret = getSecret();
+  if (!secret) {
+    els.opsLock.style.display = 'block';
+    return;
+  }
+  try {
+    const res = await fetch(OPS_URL, {
+      cache: 'no-store',
+      headers: { 'x-monitor-secret': secret },
+    });
+    if (res.status === 401) {
+      els.opsLock.style.display = 'block';
+      els.opsLock.textContent = 'MONITOR_SECRET қате. Railway-дегі кілтті жазыңыз.';
+      return;
+    }
+    if (!res.ok) {
+      els.opsLock.style.display = 'block';
+      els.opsLock.textContent = `Ops HTTP ${res.status}`;
+      return;
+    }
+    renderOps(await res.json());
+  } catch (err) {
+    els.opsLock.style.display = 'block';
+    els.opsLock.textContent = err instanceof Error ? err.message : 'Ops network error';
+  }
+}
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleString('ru-RU', {
@@ -324,6 +500,7 @@ async function runCheck() {
   if (history.length > MAX_HISTORY) history.pop();
 
   renderSummary(row);
+  await fetchOps();
   els.refreshBtn.disabled = false;
 }
 
@@ -342,6 +519,9 @@ function setupTabs() {
       document.getElementById(`tab-${tab}`)?.classList.add('is-on');
       const titles: Record<string, string> = {
         dashboard: 'Dashboard',
+        backend: 'Backend',
+        database: 'База',
+        frontend: 'Frontend',
         history: 'Тарих',
         endpoints: 'Endpoints',
       };
@@ -364,12 +544,17 @@ function setupEndpoints() {
 
 function boot() {
   els.pollLabel.textContent = `Әр ${POLL_SECONDS} сек`;
+  els.secretInput.value = getSecret();
   setupTabs();
   setupEndpoints();
 
   void runCheck();
   timer = window.setInterval(() => void runCheck(), POLL_SECONDS * 1000);
   els.refreshBtn.addEventListener('click', () => void runCheck());
+  els.secretSave.addEventListener('click', () => {
+    localStorage.setItem(SECRET_KEY, els.secretInput.value.trim());
+    void runCheck();
+  });
   window.addEventListener('resize', () => renderCharts());
 }
 

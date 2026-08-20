@@ -21,6 +21,9 @@
         <div class="side-label">Мониторинг</div>
         <nav class="nav">
           <a href="#" class="active" data-tab="dashboard">📊 Dashboard</a>
+          <a href="#" data-tab="backend">⚙️ Backend</a>
+          <a href="#" data-tab="database">🗄️ База</a>
+          <a href="#" data-tab="frontend">🖥️ Frontend</a>
           <a href="#" data-tab="history">📋 Тарих</a>
           <a href="#" data-tab="endpoints">🔗 Endpoints</a>
         </nav>
@@ -41,6 +44,8 @@
           <div class="top-actions">
             <span id="poll-label" class="chip">—</span>
             <span id="overall-badge" class="badge">—</span>
+            <input id="secret-input" class="secret-input" type="password" placeholder="MONITOR_SECRET" autocomplete="off" />
+            <button id="secret-save" type="button" class="ghost">Кілт</button>
             <button id="refresh-btn" type="button" class="primary">Тексеру</button>
           </div>
         </header>
@@ -51,7 +56,7 @@
             <div class="page-head">
               <div>
                 <h1>Мониторинг инфраструктуры</h1>
-                <p>Backend API, PostgreSQL, Frontend · real-time статус</p>
+                <p>Базадан қандай дерек шығады, API-ге не келеді, фронт қалай жауап береді</p>
               </div>
               <div class="head-time">
                 <small>Соңғы тексеру</small>
@@ -132,6 +137,115 @@
                 <div class="ai-cell"><small>Node.js</small><b id="info-node">—</b></div>
                 <div class="ai-cell"><small>Overall</small><b id="info-overall">—</b></div>
               </div>
+            </div>
+            <p id="ops-lock" class="notice" style="margin-top: 14px">
+              Нақты трафик пен база үшін жоғарғы жақта <b>MONITOR_SECRET</b> енгізіңіз.
+            </p>
+          </section>
+
+          <section id="tab-backend" class="tab-panel">
+            <div class="page-head">
+              <div>
+                <h1>Backend кірісі</h1>
+                <p>NestJS-ке келіп жатқан HTTP сұраулар (процесс жадында)</p>
+              </div>
+            </div>
+            <div class="stat-grid" id="traffic-stats">
+              <article class="stat"><small>Boot бері</small><b id="tr-total">—</b></article>
+              <article class="stat"><small>Соңғы 1 мин</small><b id="tr-min">—</b></article>
+              <article class="stat"><small>2xx / 4xx / 5xx</small><b id="tr-codes">—</b></article>
+              <article class="stat"><small>SQL / мин</small><b id="tr-sql">—</b></article>
+            </div>
+            <div class="panel">
+              <h3 class="section-title">Соңғы API hit-тер</h3>
+              <div class="table-wrap">
+                <table class="history-table">
+                  <thead>
+                    <tr>
+                      <th>Уақыт</th>
+                      <th>Method</th>
+                      <th>Path</th>
+                      <th>HTTP</th>
+                      <th>ms</th>
+                      <th>user</th>
+                    </tr>
+                  </thead>
+                  <tbody id="traffic-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-database" class="tab-panel">
+            <div class="page-head">
+              <div>
+                <h1>База (Neon / Prisma)</h1>
+                <p>COUNT + соңғы жолдар. Email/пароль көрсетілмейді</p>
+              </div>
+            </div>
+            <div class="count-grid" id="table-counts"></div>
+            <div class="panel" style="margin-top: 14px">
+              <h3 class="section-title">Prisma SQL (параметрсіз)</h3>
+              <div class="table-wrap">
+                <table class="history-table">
+                  <thead>
+                    <tr>
+                      <th>Уақыт</th>
+                      <th>ms</th>
+                      <th>Query</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sql-body"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="split-tables">
+              <div class="panel">
+                <h3 class="section-title">Requests</h3>
+                <div id="db-requests" class="feed"></div>
+              </div>
+              <div class="panel">
+                <h3 class="section-title">Offers / leads</h3>
+                <div id="db-leads" class="feed"></div>
+              </div>
+            </div>
+            <div class="split-tables">
+              <div class="panel">
+                <h3 class="section-title">Products / companies</h3>
+                <div id="db-catalog" class="feed"></div>
+              </div>
+              <div class="panel">
+                <h3 class="section-title">Activities</h3>
+                <div id="db-act" class="feed"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-frontend" class="tab-panel">
+            <div class="page-head">
+              <div>
+                <h1>Frontend (Vercel)</h1>
+                <p>Сервер Railway-ден HTML беттерді ашып көреді</p>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="kv"><span>Base</span><b id="fe-base" class="mono">—</b></div>
+            </div>
+            <div class="table-wrap" style="margin-top: 14px">
+              <table class="history-table">
+                <thead>
+                  <tr>
+                    <th>Path</th>
+                    <th>OK</th>
+                    <th>HTTP</th>
+                    <th>ms</th>
+                    <th>bytes</th>
+                    <th>title</th>
+                    <th>қате</th>
+                  </tr>
+                </thead>
+                <tbody id="frontend-body"></tbody>
+              </table>
             </div>
           </section>
 
