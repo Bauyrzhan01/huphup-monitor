@@ -95,6 +95,7 @@ const els = {
   secretInput: $('secret-input') as HTMLInputElement,
   secretSave: $('secret-save'),
   opsLock: $('ops-lock'),
+  opsBanner: $('ops-banner'),
   trafficBody: $('traffic-body'),
   sqlBody: $('sql-body'),
   tableCounts: $('table-counts'),
@@ -160,6 +161,7 @@ function renderOps(data: {
   };
 }) {
   els.opsLock.style.display = 'none';
+  if (els.opsBanner) els.opsBanner.style.display = 'none';
   els.trTotal.textContent = String(data.traffic.totalSinceBoot);
   els.trMin.textContent = String(data.traffic.lastMinute);
   els.trCodes.textContent = `${data.traffic.byStatus['2xx']} / ${data.traffic.byStatus['4xx']} / ${data.traffic.byStatus['5xx']}`;
@@ -238,32 +240,61 @@ function renderOps(data: {
     .join('');
 }
 
-async function fetchOps() {
-  const secret = getSecret();
-  if (!secret) {
-    els.opsLock.style.display = 'block';
-    return;
+function showOpsError(text: string) {
+  els.opsLock.style.display = 'block';
+  els.opsLock.textContent = text;
+  if (els.opsBanner) {
+    els.opsBanner.style.display = 'block';
+    els.opsBanner.textContent = text;
   }
-  try {
-    const res = await fetch(OPS_URL, {
-      cache: 'no-store',
+}
+
+async function fetchOps() {
+  const typed = els.secretInput.value.trim();
+  if (typed) localStorage.setItem(SECRET_KEY, typed);
+  const secret = typed || getSecret();
+
+  const tryUrls: Array<{ url: string; headers?: HeadersInit }> = [
+    { url: '/api/snapshot' },
+  ];
+  if (secret) {
+    tryUrls.push({
+      url: OPS_URL,
       headers: { 'x-monitor-secret': secret },
     });
-    if (res.status === 401) {
-      els.opsLock.style.display = 'block';
-      els.opsLock.textContent = 'MONITOR_SECRET қате. Railway-дегі кілтті жазыңыз.';
-      return;
-    }
-    if (!res.ok) {
-      els.opsLock.style.display = 'block';
-      els.opsLock.textContent = `Ops HTTP ${res.status}`;
-      return;
-    }
-    renderOps(await res.json());
-  } catch (err) {
-    els.opsLock.style.display = 'block';
-    els.opsLock.textContent = err instanceof Error ? err.message : 'Ops network error';
   }
+
+  let lastError = secret
+    ? 'Дерек жүктелмеді'
+    : 'Кілт керек емес — /api/snapshot арқылы ашылады. Бетті жаңартыңыз.';
+
+  for (const item of tryUrls) {
+    try {
+      const res = await fetch(item.url, {
+        cache: 'no-store',
+        headers: item.headers,
+      });
+      if (res.status === 401) {
+        lastError = 'MONITOR_SECRET қате';
+        continue;
+      }
+      if (!res.ok) {
+        lastError = `Ops HTTP ${res.status}`;
+        continue;
+      }
+      const ct = res.headers.get('content-type') ?? '';
+      if (!ct.includes('json')) {
+        lastError = 'Ops JSON емес';
+        continue;
+      }
+      renderOps(await res.json());
+      return;
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : 'Ops network error';
+    }
+  }
+
+  showOpsError(lastError);
 }
 
 function fmtTime(iso: string) {
